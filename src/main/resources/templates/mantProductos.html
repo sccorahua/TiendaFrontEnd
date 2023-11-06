@@ -1,0 +1,148 @@
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+        <title>Mantenimiento de Productos</title>
+        <link th:href="@{/css/bootstrap.min.css}" rel="stylesheet" type="text/css"/>
+        <script th:src="@{/js/jquery.min.js}" type="text/javascript"></script>
+        <script th:src="@{/js/bootstrap.min.js}" type="text/javascript"></script>
+    </head>
+    <body>
+    <center><h1>Mantenimiento de Productos</h1></center>
+    <br/>
+    <div class="table-responsive">
+        <table class="table table-responsive table-sm table-dark table-striped table-bordered table-hover">
+            <thead>
+                <tr class="info">
+                    <th>Código</th>
+                    <th>Nombre</th>
+                    <th>Categoría</th>
+                    <th>Precio</th>
+                    <th>Precio Anterior</th>
+                    <th>Imagen</th>
+                    <th>Nuevo?</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="producto : ${lista}">
+                    <td th:text="${producto.idProducto}"></td>
+                    <td><a th:href="@{/productoModificar(codigo=${producto.idProducto})}">
+                            <span th:text="${producto.nomProducto}" th:remove="tag"></span>
+                        </a>
+                    </td>
+                    <td th:text="${producto.categoria.nomCategoria}"></td>
+                    <td align="right" th:text="${#numbers.formatDecimal(producto.preProducto, 1, 'COMMA', 2, 'POINT')}"></td>
+                    <td align="right" th:text="${#numbers.formatDecimal(producto.antPreProducto, 1, 'COMMA', 2, 'POINT')}"></td>
+                    <td align="center" th:text="${producto.imgProducto}"></td>
+                    <td align="center">
+            <th:block th:if="${producto.nueProducto==0}">NO</th:block>
+            <th:block th:if="${producto.nueProducto==1}">SI</th:block>
+            </td>
+            <td>
+                <button type="button" class="btn btn-primary" 
+                        th:attr="data-nombre=''+${producto.nomProducto}+'', data-codigo=''+${producto.idProducto}+'', data-target='#panelElimina', data-toggle='modal'">
+                    Eliminar
+                </button>
+            </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+    <center><input type="button" value="Crear Producto" class="btn btn-danger" 
+                   onclick="javascript:document.location = '/productoMantLista'" /></center>
+    <hr/>
+    <h1>Datos del producto</h1>
+
+    <form th:action="@{productoGrabar}" th:object="${productoDatos}" method="POST">
+        <div class="form-row">
+            <div class="form-group col-md-6">
+                <label for="txtCodigo">Código:</label>
+                <input type="text" class="form-control" readonly
+                       th:field="*{idProducto}"/>
+            </div>
+            <div class="form-group col-md-6">
+                <label for="nomProducto">Nombre:</label>
+                <input type="text" class="form-control" 
+                       placeholder="Ingrese el nombre" required
+                       th:field="*{nomProducto}"/>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group col-md-6">
+                <label for="cmbCategoria">Categoría:</label>
+                <select class="form-control" th:field="*{categoria.idCategoria}">
+                    <option th:each="cat : ${listaCategoria}" th:value="${cat.idCategoria}" 
+                            th:text="${cat.nomCategoria}">
+                    </option>
+                </select>
+            </div>
+            <div class="form-group col-md-6">
+                <label for="imgProducto">Imagen:</label>
+                <input type="text" class="form-control" 
+                       placeholder="Ingrese la imagen" required
+                       th:field="*{imgProducto}"/>
+            </div>
+
+        </div>
+        <div class="form-row">
+            <div class="form-group col-md-4">
+                <label for="preProducto">Precio actual:</label>
+                <input type="number" class="form-control" 
+                       placeholder="Ingrese el precio" required
+                       th:field="*{preProducto}"/>
+            </div>
+            <div class="form-group col-md-4">
+                <label for="antPreProducto">Precio anterior:</label>
+                <input type="number" class="form-control" 
+                       placeholder="Ingrese el precio anterior" required
+                       th:field="*{antPreProducto}"/>
+            </div>
+            <div class="form-check col-md-4">
+                <label for="chkNuevo">Nuevo:</label>
+                <input type="checkbox" name="chkNuevo" th:checked="${productoDatos.nueProducto}==1 ? 'checked'" class="form-check-input">&nbsp;Si
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group col-md-12">
+                <input type="submit" value="Grabar" class="btn btn-primary" />
+            </div>
+        </div>
+        <input type="hidden" name="idProducto" th:value="${productoDatos.idProducto}"/>
+    </form>
+
+    <!-- Modal para eliminación -->
+    <div class="modal fade" id="panelElimina" tabindex="-1" role="dialog" >
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header" style="background-color: #CBE4F5;">
+                    <h5 class="modal-title" id="exampleModalLabel">Eliminar Producto</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    Está seguro de eliminar el Producto?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-dismiss="modal">Cancelar</button>
+                    <button type="button" id="btnAceptaEli" class="btn btn-danger">Eliminar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script language="javascript">
+        $('#panelElimina').on('show.bs.modal', function (event) {
+            var button = $(event.relatedTarget); // Button that triggered the modal
+            var recipient = button.data('nombre'); // Extract info from data-* attributes
+            var codigo = button.data('codigo'); // Extract info from data-* attributes
+
+            var modal = $(this);
+            modal.find('.modal-body').text('Seguro de eliminar ' + recipient + ' ?');
+            $('#btnAceptaEli').click(function () {
+                window.location = "/productoEliminar?codigo=" + codigo;
+            })
+        })
+    </script>
+</body>
+</html>
